@@ -17,6 +17,8 @@ export type Confirmation = {
   visitor_token: string;
   name: string;
   phone: string;
+  companions?: number | null;
+  notes?: string | null;
   presence_confirmed: boolean;
   confirmed_at: string;
   duplicate_status: string;

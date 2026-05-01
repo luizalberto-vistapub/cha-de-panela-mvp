@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { slug, visitorToken, name, phone } = body;
+  const { slug, visitorToken, name, phone, companions, notes } = body;
 
   if (!slug || !visitorToken || !name?.trim() || !phone?.trim()) {
     return NextResponse.json({ error: "Nome e telefone sao obrigatorios." }, { status: 400 });
@@ -21,6 +21,8 @@ export async function POST(request: Request) {
         visitor_token: visitorToken,
         name: name.trim(),
         phone: phone.trim(),
+        companions: Math.max(0, Math.min(5, Number(companions) || 0)),
+        notes: notes?.trim() || null,
         presence_confirmed: true,
         confirmed_at: new Date().toISOString(),
         user_agent: request.headers.get("user-agent")

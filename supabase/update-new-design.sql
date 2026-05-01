@@ -1,24 +1,16 @@
-insert into events (
-  name,
-  couple_name,
-  short_description,
-  welcome_text,
-  event_date,
-  event_time,
-  event_place,
-  cover_image_url,
-  public_slug
-) values (
-  'Chá de Panela',
-  'João e Mary',
-  'Venha celebrar esse momento especial com a gente.',
-  'Estamos preparando nosso cantinho e queremos celebrar esse novo capítulo com quem faz parte da nossa história. Seu carinho é o melhor presente.',
-  '2026-06-20',
-  '16h',
-  'Casa da familia - endereco enviado no convite',
-  '/images/hero-couple-optimized.jpg',
-  'joao-e-mary'
-) on conflict (public_slug) do nothing;
+alter table guest_confirmations add column if not exists companions integer not null default 0;
+alter table guest_confirmations add column if not exists notes text;
+
+update events
+set
+  name = 'Chá de Panela',
+  couple_name = 'João e Mary',
+  welcome_text = 'Estamos preparando nosso cantinho e queremos celebrar esse novo capítulo com quem faz parte da nossa história. Seu carinho é o melhor presente.'
+where public_slug = 'joao-e-mary';
+
+update gifts set name = 'Jogo de xícaras' where name = 'Jogo de xicaras';
+update gifts set name = 'Pá de lixo' where name = 'Pa de lixo';
+update gifts set category = 'Área de serviço' where category = 'Area de servico';
 
 insert into gifts (event_id, name, category, display_order)
 select e.id, g.name, g.category, g.display_order

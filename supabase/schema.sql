@@ -22,6 +22,8 @@ create table if not exists guest_confirmations (
   visitor_token text not null,
   name text not null,
   phone text not null,
+  companions integer not null default 0,
+  notes text,
   presence_confirmed boolean not null default true,
   confirmed_at timestamptz not null default now(),
   user_agent text,
@@ -71,6 +73,9 @@ alter table events enable row level security;
 alter table guest_confirmations enable row level security;
 alter table gifts enable row level security;
 alter table gift_reservation_history enable row level security;
+
+alter table guest_confirmations add column if not exists companions integer not null default 0;
+alter table guest_confirmations add column if not exists notes text;
 
 create or replace function reserve_gift(p_slug text, p_gift_id uuid, p_visitor_token text)
 returns table(success boolean, message text)

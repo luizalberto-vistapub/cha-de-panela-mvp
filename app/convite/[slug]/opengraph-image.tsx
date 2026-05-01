@@ -1,6 +1,8 @@
 import { ImageResponse } from "next/og";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
+/* eslint-disable @next/next/no-img-element */
+
 export const size = {
   width: 1200,
   height: 630

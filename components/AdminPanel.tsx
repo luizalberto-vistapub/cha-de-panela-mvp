@@ -233,6 +233,8 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                   <tr>
                     <th>Nome</th>
                     <th>Telefone</th>
+                    <th>Acompanhantes</th>
+                    <th>Recado</th>
                     <th>Confirmado em</th>
                     <th>Token</th>
                     <th>Duplicidade</th>
@@ -243,6 +245,8 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                     <tr key={confirmation.id}>
                       <td>{confirmation.name}</td>
                       <td>{confirmation.phone}</td>
+                      <td>{confirmation.companions || 0}</td>
+                      <td>{confirmation.notes || "-"}</td>
                       <td>{new Date(confirmation.confirmed_at).toLocaleString("pt-BR")}</td>
                       <td>{confirmation.visitor_token.slice(0, 12)}...</td>
                       <td>{confirmation.duplicate_status}</td>
