@@ -439,9 +439,9 @@ th {
   --shadow-sm: 0 4px 14px rgba(58, 46, 38, 0.08);
   --shadow-md: 0 18px 48px rgba(58, 46, 38, 0.14);
   --shadow-lg: 0 32px 80px rgba(58, 46, 38, 0.18);
-  --serif: var(--font-cormorant), "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  --sans: var(--font-inter-tight), "Inter Tight", "Inter", system-ui, sans-serif;
-  --script-font: var(--font-allura), "Brush Script MT", "Segoe Script", cursive;
+  --serif: var(--font-cormorant, "Cormorant Garamond"), Georgia, "Times New Roman", serif;
+  --sans: var(--font-inter-tight, "Inter Tight"), "Inter", system-ui, sans-serif;
+  --script-font: var(--font-allura, "Brush Script MT"), "Segoe Script", cursive;
 }
 
 body {
