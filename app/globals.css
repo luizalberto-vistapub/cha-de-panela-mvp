@@ -575,7 +575,7 @@ body::before {
 .couple .amp {
   margin: 0 0.25em;
   color: var(--accent-deep);
-  font-family: "Cormorant Garamond", Cormorant, Georgia, "Times New Roman", serif;
+  font-family: var(--script-font);
   font-size: 0.45em;
   font-style: italic;
   font-weight: 500;
