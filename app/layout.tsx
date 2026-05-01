@@ -30,8 +30,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body className={`${allura.variable} ${cormorant.variable} ${interTight.variable}`}>{children}</body>
+    <html lang="pt-BR" className={`${allura.variable} ${cormorant.variable} ${interTight.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
