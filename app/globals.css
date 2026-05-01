@@ -153,7 +153,7 @@ a {
 .couple-name {
   margin: 0;
   color: var(--terracotta);
-  font-family: "Brush Script MT", "Segoe Script", cursive;
+  font-family: var(--font-allura), "Brush Script MT", "Segoe Script", cursive;
   font-size: clamp(4.25rem, 16vw, 9.5rem);
   font-weight: 400;
   line-height: 0.82;
@@ -439,9 +439,9 @@ th {
   --shadow-sm: 0 4px 14px rgba(58, 46, 38, 0.08);
   --shadow-md: 0 18px 48px rgba(58, 46, 38, 0.14);
   --shadow-lg: 0 32px 80px rgba(58, 46, 38, 0.18);
-  --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-  --sans: "Inter Tight", "Inter", system-ui, sans-serif;
-  --script-font: "Brush Script MT", "Segoe Script", cursive;
+  --serif: var(--font-cormorant), "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --sans: var(--font-inter-tight), "Inter Tight", "Inter", system-ui, sans-serif;
+  --script-font: var(--font-allura), "Brush Script MT", "Segoe Script", cursive;
 }
 
 body {
