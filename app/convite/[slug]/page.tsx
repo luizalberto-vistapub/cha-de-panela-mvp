@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
+import { unstable_noStore as noStore } from "next/cache";
 import { notFound } from "next/navigation";
 import { PublicInvite } from "@/components/PublicInvite";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import type { EventInfo } from "@/lib/types";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 async function getEvent(slug: string): Promise<EventInfo | null> {
+  noStore();
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("events")
