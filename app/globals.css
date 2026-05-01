@@ -1335,6 +1335,7 @@ body::before {
 }
 
 .banner {
+  display: none;
   position: relative;
   height: clamp(22rem, 46vw, 32rem);
   margin: 2rem 0 0;
@@ -1439,6 +1440,10 @@ body::before {
 }
 
 @media (max-width: 760px) {
+  .banner {
+    display: block;
+  }
+
   .hero {
     padding: 4rem 1rem 5rem;
   }
