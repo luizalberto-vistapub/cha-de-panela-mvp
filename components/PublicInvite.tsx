@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FloralCorner, FloralSpray } from "@/components/Florals";
-import type { Confirmation, EventInfo, Gift } from "@/lib/types";
+import type { Confirmation, EventInfo, Gift, StoryItem } from "@/lib/types";
 
 type Props = {
   event: EventInfo;
 };
 
 const TOKEN_KEY = "cha_panela_visitor_token";
+const FLORAL_IMAGE = "/images/floral-blue.png";
 
 const Icon = {
   Calendar: () => (
@@ -146,19 +146,51 @@ function Countdown({ event }: { event: EventInfo }) {
   );
 }
 
-function StoryStrip() {
-  const beats = [
+const DEFAULT_STORY_ITEMS: StoryItem[] = [
     { year: "2019", title: "O primeiro café", text: "Um encontro simples que virou assunto para a vida toda." },
     { year: "2022", title: "A primeira casa", text: "Planos, plantas, listas e um cantinho ganhando forma." },
     { year: "2025", title: "O sim", text: "A certeza de construir cada detalhe lado a lado." },
     { year: "2026", title: "O chá", text: "Vocês com a gente nesse começo tão especial." }
-  ];
+];
+
+function isStoryItem(item: unknown): item is StoryItem {
+  if (!item || typeof item !== "object") return false;
+  const maybeItem = item as Partial<StoryItem>;
+  return (
+    typeof maybeItem.year === "string" &&
+    typeof maybeItem.title === "string" &&
+    typeof maybeItem.text === "string"
+  );
+}
+
+function getStoryItems(event: EventInfo) {
+  const items = Array.isArray(event.story_items) ? event.story_items.filter(isStoryItem) : [];
+  return items.length ? items : DEFAULT_STORY_ITEMS;
+}
+
+function StoryStrip({ event }: { event: EventInfo }) {
+  const beats = getStoryItems(event);
 
   return (
-    <section className="story" aria-labelledby="story-title">
+    <section className="story story-with-photo" aria-labelledby="story-title">
       <div className="section-head">
-        <p className="kicker">A nossa história</p>
-        <h2 id="story-title">De um café para uma vida juntos</h2>
+        <p className="kicker">{event.story_kicker || "A nossa história"}</p>
+        <h2 id="story-title">{event.story_title || "De um café para uma vida juntos"}</h2>
+      </div>
+      <div className="story-photo">
+        <div className="story-photo-frame">
+          <Image
+            src="/images/beijo.jpg"
+            alt={`${event.couple_name} sorrindo juntos`}
+            width={920}
+            height={690}
+          />
+        </div>
+        <p className="story-photo-cap">
+          <span className="quote-mark">“</span>
+          O resto da vida começa amanhã, e a gente nem precisa de pressa.
+          <span className="quote-mark">”</span>
+        </p>
       </div>
       <ol className="timeline">
         {beats.map((beat) => (
@@ -169,6 +201,37 @@ function StoryStrip() {
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+function FloralImage({ className }: { className: string }) {
+  return (
+    <Image
+      src={FLORAL_IMAGE}
+      alt=""
+      aria-hidden="true"
+      className={`floral ${className}`}
+      width={1200}
+      height={610}
+    />
+  );
+}
+
+function PhotoBanner() {
+  return (
+    <section className="banner" aria-hidden="true">
+      <Image
+        src="/images/danca.jpg"
+        alt=""
+        className="banner-photo"
+        width={920}
+        height={690}
+      />
+      <div className="banner-overlay">
+        <p className="banner-script">vai ter dança</p>
+        <p className="banner-sub">&mdash; e a gente quer você lá &mdash;</p>
+      </div>
     </section>
   );
 }
@@ -324,16 +387,17 @@ export function PublicInvite({ event }: Props) {
     <main className="app heading-script">
       <section className="hero">
         <Image
-          src={event.cover_image_url}
+          src="/images/danca.jpg"
           alt={`Foto de ${event.couple_name}`}
           className="hero-photo"
-          width={1920}
-          height={1080}
+          width={920}
+          height={690}
           priority
         />
-        <FloralCorner className="floral floral-top-left" />
-        <FloralCorner className="floral floral-top-right" flip />
-        <FloralSpray className="floral floral-bottom-right" opacity={0.8} />
+        <FloralImage className="floral-top-left" />
+        <FloralImage className="floral-top-right" />
+        <FloralImage className="floral-bottom-left" />
+        <FloralImage className="floral-bottom-right" />
         <div className="hero-inner">
           <p className="eyebrow">&mdash; {event.name} &mdash;</p>
           <h1 className="couple">
@@ -345,6 +409,17 @@ export function PublicInvite({ event }: Props) {
             <span className="dot" />
             <span className="line" />
             <span className="dot" />
+          </div>
+          <div className="hero-portrait" aria-hidden="true">
+            <div className="portrait-frame">
+              <Image
+                src="/images/praia.jpg"
+                alt=""
+                width={720}
+                height={1080}
+              />
+            </div>
+            <span className="portrait-tag">Rio &middot; 2025</span>
           </div>
           <p className="hero-blurb">{event.welcome_text}</p>
           <ul className="event-meta">
@@ -370,7 +445,7 @@ export function PublicInvite({ event }: Props) {
         </div>
       </section>
 
-      <StoryStrip />
+      <StoryStrip event={event} />
 
       <section id="confirmar" className="rsvp" ref={rsvpRef}>
         <div className="section-head">
@@ -532,9 +607,11 @@ export function PublicInvite({ event }: Props) {
         </div>
       </section>
 
+      <PhotoBanner />
+
       <footer className="foot">
-        <FloralSpray className="floral foot-floral-left" opacity={0.6} />
-        <FloralSpray className="floral foot-floral-right" opacity={0.6} />
+        <FloralImage className="foot-floral-left" />
+        <FloralImage className="foot-floral-right" />
         <p className="foot-script">Com carinho,</p>
         <p className="foot-couple">{event.couple_name}</p>
         <p className="foot-meta">20 &middot; 06 &middot; 2026 &middot; São Paulo</p>

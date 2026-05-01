@@ -1,11 +1,27 @@
 alter table guest_confirmations add column if not exists companions integer not null default 0;
 alter table guest_confirmations add column if not exists notes text;
+alter table events add column if not exists story_kicker text not null default 'A nossa história';
+alter table events add column if not exists story_title text not null default 'De um café para uma vida juntos';
+alter table events add column if not exists story_items jsonb not null default '[
+  {"year": "2019", "title": "O primeiro café", "text": "Um encontro simples que virou assunto para a vida toda."},
+  {"year": "2022", "title": "A primeira casa", "text": "Planos, plantas, listas e um cantinho ganhando forma."},
+  {"year": "2025", "title": "O sim", "text": "A certeza de construir cada detalhe lado a lado."},
+  {"year": "2026", "title": "O chá", "text": "Vocês com a gente nesse começo tão especial."}
+]'::jsonb;
 
 update events
 set
   name = 'Chá de Panela',
   couple_name = 'João e Mary',
-  welcome_text = 'Estamos preparando nosso cantinho e queremos celebrar esse novo capítulo com quem faz parte da nossa história. Seu carinho é o melhor presente.'
+  welcome_text = 'Estamos preparando nosso cantinho e queremos celebrar esse novo capítulo com quem faz parte da nossa história. Seu carinho é o melhor presente.',
+  story_kicker = 'A nossa história',
+  story_title = 'De um café para uma vida juntos',
+  story_items = '[
+    {"year": "2019", "title": "O primeiro café", "text": "Um encontro simples que virou assunto para a vida toda."},
+    {"year": "2022", "title": "A primeira casa", "text": "Planos, plantas, listas e um cantinho ganhando forma."},
+    {"year": "2025", "title": "O sim", "text": "A certeza de construir cada detalhe lado a lado."},
+    {"year": "2026", "title": "O chá", "text": "Vocês com a gente nesse começo tão especial."}
+  ]'::jsonb
 where public_slug = 'joao-e-mary';
 
 update gifts set name = 'Jogo de xícaras' where name = 'Jogo de xicaras';

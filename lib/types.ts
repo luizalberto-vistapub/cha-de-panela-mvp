@@ -4,11 +4,20 @@ export type EventInfo = {
   couple_name: string;
   short_description: string;
   welcome_text: string;
+  story_kicker?: string | null;
+  story_title?: string | null;
+  story_items?: StoryItem[] | null;
   event_date: string;
   event_time: string;
   event_place: string;
   cover_image_url: string;
   public_slug: string;
+};
+
+export type StoryItem = {
+  year: string;
+  title: string;
+  text: string;
 };
 
 export type Confirmation = {

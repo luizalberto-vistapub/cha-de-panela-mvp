@@ -6,6 +6,14 @@ create table if not exists events (
   couple_name text not null,
   short_description text not null,
   welcome_text text not null,
+  story_kicker text not null default 'A nossa história',
+  story_title text not null default 'De um café para uma vida juntos',
+  story_items jsonb not null default '[
+    {"year": "2019", "title": "O primeiro café", "text": "Um encontro simples que virou assunto para a vida toda."},
+    {"year": "2022", "title": "A primeira casa", "text": "Planos, plantas, listas e um cantinho ganhando forma."},
+    {"year": "2025", "title": "O sim", "text": "A certeza de construir cada detalhe lado a lado."},
+    {"year": "2026", "title": "O chá", "text": "Vocês com a gente nesse começo tão especial."}
+  ]'::jsonb,
   event_date date not null,
   event_time text not null,
   event_place text not null,
@@ -76,6 +84,14 @@ alter table gift_reservation_history enable row level security;
 
 alter table guest_confirmations add column if not exists companions integer not null default 0;
 alter table guest_confirmations add column if not exists notes text;
+alter table events add column if not exists story_kicker text not null default 'A nossa história';
+alter table events add column if not exists story_title text not null default 'De um café para uma vida juntos';
+alter table events add column if not exists story_items jsonb not null default '[
+  {"year": "2019", "title": "O primeiro café", "text": "Um encontro simples que virou assunto para a vida toda."},
+  {"year": "2022", "title": "A primeira casa", "text": "Planos, plantas, listas e um cantinho ganhando forma."},
+  {"year": "2025", "title": "O sim", "text": "A certeza de construir cada detalhe lado a lado."},
+  {"year": "2026", "title": "O chá", "text": "Vocês com a gente nesse começo tão especial."}
+]'::jsonb;
 
 create or replace function reserve_gift(p_slug text, p_gift_id uuid, p_visitor_token text)
 returns table(success boolean, message text)
