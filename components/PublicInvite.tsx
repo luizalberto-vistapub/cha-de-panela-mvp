@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Confirmation, EventInfo, Gift, StoryItem } from "@/lib/types";
+import type { Confirmation, EventInfo, StoryItem } from "@/lib/types";
 
 type Props = {
   event: EventInfo;
@@ -10,6 +10,8 @@ type Props = {
 
 const TOKEN_KEY = "cha_panela_visitor_token";
 const FLORAL_IMAGE = "/images/floral-blue.png";
+const PIX_COPY_PASTE = "00020126580014BR.GOV.BCB.PIX013617f83fe0-d15f-4d9a-958b-cd66c327c6005204000053039865802BR5925Joao Victor Barbosa da Co6009SAO PAULO621405104nBybVsQt463048A00";
+const PIX_QR_CODE_IMAGE = `https://api.qrserver.com/v1/create-qr-code/?size=520x520&data=${encodeURIComponent(PIX_COPY_PASTE)}`;
 
 const Icon = {
   Calendar: () => (
@@ -44,12 +46,6 @@ const Icon = {
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round">
       <rect x="3" y="9" width="18" height="11" rx="1.5" />
       <path d="M3 13h18M12 9v11M8 9c-1.5 0-3-1-3-2.5S6.5 4 8 4c2 0 4 5 4 5s2-5 4-5c1.5 0 3 1 3 2.5S17.5 9 16 9" />
-    </svg>
-  ),
-  Search: () => (
-    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
-      <circle cx="11" cy="11" r="6.5" />
-      <path d="m20 20-3.5-3.5" />
     </svg>
   )
 };
@@ -105,15 +101,6 @@ function useCountdown(target: Date) {
     minutes: Math.floor((ms % 3600000) / 60000),
     seconds: Math.floor((ms % 60000) / 1000)
   };
-}
-
-function categoryKey(category?: string | null) {
-  return (category || "Presentes")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
 }
 
 function Countdown({ event }: { event: EventInfo }) {
@@ -239,33 +226,22 @@ function PhotoBanner() {
 export function PublicInvite({ event }: Props) {
   const [visitorToken, setVisitorToken] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
-  const [gifts, setGifts] = useState<Gift[]>([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [companions, setCompanions] = useState(0);
   const [notes, setNotes] = useState("");
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [copyStatus, setCopyStatus] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const rsvpRef = useRef<HTMLElement>(null);
-  const giftsRef = useRef<HTMLElement>(null);
+  const pixRef = useRef<HTMLElement>(null);
 
   const loadState = useCallback(async (token: string) => {
-    const [meResponse, giftResponse] = await Promise.all([
-      fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`),
-      fetch(`/api/public/gifts?slug=${event.public_slug}`)
-    ]);
+    const meResponse = await fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`);
 
     if (meResponse.ok) {
       const data = await meResponse.json();
       setConfirmation(data.confirmation);
-    }
-
-    if (giftResponse.ok) {
-      const data = await giftResponse.json();
-      setGifts(data.gifts || []);
     }
   }, [event.public_slug]);
 
@@ -275,44 +251,17 @@ export function PublicInvite({ event }: Props) {
     loadState(token).catch(() => setError("Não conseguimos carregar seus dados agora."));
   }, [loadState]);
 
-  const categories = useMemo(() => {
-    const map = new Map<string, string>();
-    gifts.forEach((gift) => map.set(categoryKey(gift.category), gift.category || "Presentes"));
-    return [...map.entries()].map(([id, label]) => ({ id, label }));
-  }, [gifts]);
-
-  const counts = useMemo(() => {
-    const total = gifts.filter((gift) => gift.status !== "INATIVO").length;
-    const taken = gifts.filter((gift) => gift.status === "RESERVADO").length;
-    return { total, free: total - taken };
-  }, [gifts]);
-
-  const filteredGifts = useMemo(() => {
-    return gifts.filter((gift) => {
-      if (gift.status === "INATIVO") return false;
-      if (query && !gift.name.toLowerCase().includes(query.toLowerCase())) return false;
-      if (filter === "free") return gift.status === "DISPONIVEL";
-      if (filter === "all") return true;
-      return categoryKey(gift.category) === filter;
-    });
-  }, [filter, gifts, query]);
-
-  const groupedGifts = useMemo(() => {
-    const map = new Map<string, { label: string; items: Gift[] }>();
-    filteredGifts.forEach((gift) => {
-      const key = categoryKey(gift.category);
-      if (!map.has(key)) map.set(key, { label: gift.category || "Presentes", items: [] });
-      map.get(key)?.items.push(gift);
-    });
-    return [...map.entries()];
-  }, [filteredGifts]);
-
-  const reservedByMe = gifts.find(
-    (gift) => gift.status === "RESERVADO" && gift.reserved_by_visitor_token === visitorToken
-  );
-
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  async function copyPix() {
+    try {
+      await navigator.clipboard.writeText(PIX_COPY_PASTE);
+      setCopyStatus("Pix copiado.");
+    } catch {
+      setCopyStatus("Nao foi possivel copiar automaticamente.");
+    }
   }
 
   async function confirmPresence(eventSubmit: React.FormEvent) {
@@ -339,7 +288,7 @@ export function PublicInvite({ event }: Props) {
         visitorToken,
         name,
         phone,
-        companions,
+        companions: 0,
         notes
       })
     });
@@ -352,35 +301,9 @@ export function PublicInvite({ event }: Props) {
     }
 
     setConfirmation(data.confirmation);
-    setMessage("Presença confirmada! Agora, se quiser, escolha um presente da lista.");
+    setMessage("Presença confirmada! O Pix ficou logo abaixo para quem quiser enviar um carinho.");
     await loadState(visitorToken);
-    setTimeout(() => jumpTo(giftsRef), 250);
-  }
-
-  async function reserveGift(giftId: string) {
-    setError("");
-    setMessage("");
-    setLoading(true);
-    const response = await fetch("/api/public/reserve-gift", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        slug: event.public_slug,
-        visitorToken,
-        giftId
-      })
-    });
-    const data = await response.json();
-    setLoading(false);
-
-    if (!response.ok || !data.success) {
-      setError(data.error || data.message || "Esse presente acabou de ser escolhido. Escolha outro da lista.");
-      await loadState(visitorToken);
-      return;
-    }
-
-    setMessage("Presente reservado com sucesso. Obrigado pelo carinho!");
-    await loadState(visitorToken);
+    setTimeout(() => jumpTo(pixRef), 250);
   }
 
   return (
@@ -419,7 +342,7 @@ export function PublicInvite({ event }: Props) {
                 height={1080}
               />
             </div>
-            <span className="portrait-tag">Rio &middot; 2025</span>
+            <span className="portrait-tag">Rio &middot; 2026</span>
           </div>
           <p className="hero-blurb">{event.welcome_text}</p>
           <ul className="event-meta">
@@ -438,8 +361,8 @@ export function PublicInvite({ event }: Props) {
             <button className="btn btn-primary" onClick={() => jumpTo(rsvpRef)} type="button">
               <Icon.Heart /> Confirmar presença
             </button>
-            <button className="btn btn-ghost" onClick={() => jumpTo(giftsRef)} type="button">
-              <Icon.Gift /> Ver lista de presentes
+            <button className="btn btn-ghost" onClick={() => jumpTo(pixRef)} type="button">
+              <Icon.Gift /> Lista de Presente
             </button>
           </div>
         </div>
@@ -453,7 +376,7 @@ export function PublicInvite({ event }: Props) {
           <h2>{confirmation ? `Que alegria, ${confirmation.name.split(" ")[0]}!` : "É rapidinho"}</h2>
           <p className="lede">
             {confirmation
-              ? "Anotamos seu nome na lista. Agora você pode reservar um presente logo abaixo."
+              ? "Anotamos seu nome na lista. O Pix ficou logo abaixo para quem quiser enviar um carinho."
               : "Só pra ajudar a gente a organizar comidinha, lugar e quanto bolo encomendar."}
           </p>
         </div>
@@ -462,10 +385,9 @@ export function PublicInvite({ event }: Props) {
           <div className="rsvp-success">
             <div className="success-badge"><Icon.Check /></div>
             <p>
-              Confirmamos pelo telefone <b>{confirmation.phone}</b>
-              {confirmation.companions ? ` com mais ${confirmation.companions} acompanhante${confirmation.companions > 1 ? "s" : ""}` : ""}.
+              Confirmamos pelo telefone <b>{confirmation.phone}</b>.
             </p>
-            <p className="rsvp-next">Agora, se quiser, escolha um presente da lista logo abaixo. &darr;</p>
+            <p className="rsvp-next">O Pix ficou logo abaixo para quem quiser enviar um carinho. &darr;</p>
           </div>
         ) : (
           <form className="rsvp-form" onSubmit={confirmPresence} noValidate>
@@ -488,14 +410,6 @@ export function PublicInvite({ event }: Props) {
                 onChange={(eventChange) => setPhone(formatPhone(eventChange.target.value))}
               />
             </label>
-            <div className="field">
-              <span>Vai levar acompanhantes?</span>
-              <div className="stepper" role="group" aria-label="Acompanhantes">
-                <button type="button" onClick={() => setCompanions((value) => Math.max(0, value - 1))}>&minus;</button>
-                <span className="stepper-val">{companions === 0 ? "Só eu" : `+${companions}`}</span>
-                <button type="button" onClick={() => setCompanions((value) => Math.min(5, value + 1))}>+</button>
-              </div>
-            </div>
             <label className="field field-wide">
               <span>Recadinho (opcional)</span>
               <textarea
@@ -509,7 +423,7 @@ export function PublicInvite({ event }: Props) {
               <button className="btn btn-primary" disabled={loading} type="submit">
                 {loading ? "Enviando..." : <><Icon.Heart /> Confirmar minha presença</>}
               </button>
-              <p className="form-fineprint">Confirme até <b>15 de junho</b>, por favor.</p>
+              <p className="form-fineprint">Confirme até <b>01 de julho</b>, por favor.</p>
             </div>
           </form>
         )}
@@ -517,93 +431,45 @@ export function PublicInvite({ event }: Props) {
         {error && <p className="message error">{error}</p>}
       </section>
 
-      <section id="presentes" className="gifts" ref={giftsRef}>
+      <section id="pix" className="pix-section" ref={pixRef}>
         <div className="section-head">
-          <p className="kicker">Lista de presentes</p>
-          <h2>Escolha um presentinho</h2>
-          <p className="lede">
-            Reserve um item para a gente não ganhar presentes repetidos. Você pode comprar onde preferir.
-            <br />Preferência de cor/material: <b>preto, inox, branco, bambu, dourado ou cristal</b>.
-            {reservedByMe ? <><br />Seu presente reservado: <b>{reservedByMe.name}</b>.</> : null}
-          </p>
-        </div>
-
-        <div className="gift-toolbar">
-          <div className="search">
-            <Icon.Search />
-            <input value={query} onChange={(eventChange) => setQuery(eventChange.target.value)} placeholder="Buscar por nome..." />
-            {query && <button className="search-clear" onClick={() => setQuery("")} type="button">&times;</button>}
-          </div>
-          <div className="chips" role="tablist" aria-label="Categorias de presentes">
-            <button className={`chip ${filter === "all" ? "is-on" : ""}`} onClick={() => setFilter("all")} type="button">
-              Todos <em>{counts.total}</em>
-            </button>
-            <button className={`chip ${filter === "free" ? "is-on" : ""}`} onClick={() => setFilter("free")} type="button">
-              Disponíveis <em>{counts.free}</em>
-            </button>
-            {categories.map((category) => (
-              <button
-                className={`chip ${filter === category.id ? "is-on" : ""}`}
-                key={category.id}
-                onClick={() => setFilter(category.id)}
-                type="button"
-              >
-                {category.label}
-              </button>
-            ))}
+          <p className="kicker">Presente por Pix</p>
+          <h2>Seu carinho ajuda a realizar nossos sonhos</h2>
+          <div className="lede pix-lede">
+            <p>Estamos muito felizes em compartilhar esse momento tão especial com você!</p>
+            <p>Sua presença é o nosso maior presente 💕</p>
+            <p>Mas, se desejar nos presentear, ficaremos muito gratos com uma contribuição via Pix para realizarmos nossos sonhos juntos!</p>
           </div>
         </div>
 
         {!confirmation && (
           <div className="gate">
             <span className="gate-dot" />
-            Confirme sua presença ali em cima para liberar a reserva. Você ainda pode dar uma olhadinha.
+            Confirme sua presença ali em cima para liberar o Pix.
           </div>
         )}
 
-        <div className="gift-stream">
-          {groupedGifts.map(([key, group]) => (
-            <div className="gift-group" key={key}>
-              <header className="gift-group-head">
-                <span className="ggh-num">{String(group.items.length).padStart(2, "0")}</span>
-                <h3>{group.label}</h3>
-                <span className="ggh-rule" />
-              </header>
-              <div className="gift-grid">
-                {group.items.map((gift) => {
-                  const isReserved = gift.status === "RESERVADO";
-                  const isMine = gift.reserved_by_visitor_token === visitorToken;
-                  return (
-                    <article className={`gift ${isReserved ? "is-reserved" : ""} ${isMine ? "is-mine" : ""}`} key={gift.id}>
-                      <div className="gift-top">
-                        <span className="gift-cat">{gift.category || "Presente"}</span>
-                        <span className={`badge ${isMine ? "badge-mine" : isReserved ? "badge-taken" : "badge-free"}`}>
-                          {isMine ? "Você reservou" : isReserved ? "Reservado" : "Disponível"}
-                        </span>
-                      </div>
-                      <h3>{gift.name}</h3>
-                      {gift.description && <p className="gift-note">{gift.description}</p>}
-                      <div className="gift-foot">
-                        {isReserved ? (
-                          <p className="gift-note">{isMine ? "Obrigada por escolher!" : "Já foi escolhido por alguém."}</p>
-                        ) : (
-                          <button
-                            className="btn btn-primary btn-sm"
-                            disabled={loading || !confirmation || Boolean(reservedByMe)}
-                            onClick={() => reserveGift(gift.id)}
-                            type="button"
-                          >
-                            Vou levar este
-                          </button>
-                        )}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+        <div className={`pix-card ${!confirmation ? "is-locked" : ""}`}>
+          <div className="pix-qr">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={PIX_QR_CODE_IMAGE}
+              alt="QR Code para pagamento via Pix"
+            />
+          </div>
+          <div className="pix-details">
+            <p className="pix-owner">João Victor Barbosa da Co</p>
+            <p className="pix-copy">
+              Escaneie o QR Code ou copie o Pix copia e cola.
+            </p>
+            <div className="pix-code" aria-label="Pix copia e cola">
+              {PIX_COPY_PASTE}
             </div>
-          ))}
-          {filteredGifts.length === 0 && <p className="empty">Nada por aqui. Tente outro filtro.</p>}
+            <button className="btn btn-primary" disabled={!confirmation} onClick={copyPix} type="button">
+              Copiar o Pix
+            </button>
+            {copyStatus && <p className="message success">{copyStatus}</p>}
+          </div>
         </div>
       </section>
 

@@ -21,7 +21,7 @@ export default async function Image({ params }: { params: { slug: string } }) {
 
   const coupleName = event?.couple_name || "Joao e Mary";
   const title = event?.name || "Cha de Panela";
-  const description = event?.short_description || "Confirme sua presenca e reserve um presente.";
+  const description = event?.short_description || "Confirme sua presenca no cha de panela.";
   const cover = event?.cover_image_url?.startsWith("http")
     ? event.cover_image_url
     : `${siteUrl}${event?.cover_image_url || "/images/hero-couple-optimized.jpg"}`;

@@ -24,7 +24,7 @@ const interTight = Inter_Tight({
 
 export const metadata: Metadata = {
   title: "Cha de Panela | Joao e Mary",
-  description: "Confirme sua presenca e reserve um presente para o cha de panela.",
+  description: "Confirme sua presenca no cha de panela de Joao e Mary.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000")
 };
 

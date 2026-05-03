@@ -1,39 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Confirmation, Gift } from "@/lib/types";
-
-type GiftForm = {
-  name: string;
-  description: string;
-  category: string;
-  reference_link: string;
-};
-
-const emptyGift: GiftForm = {
-  name: "",
-  description: "",
-  category: "Cozinha",
-  reference_link: ""
-};
+import type { Confirmation } from "@/lib/types";
 
 export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
   const [isAuthed, setIsAuthed] = useState(initialIsAuthed);
   const [password, setPassword] = useState("");
   const [confirmations, setConfirmations] = useState<Confirmation[]>([]);
-  const [gifts, setGifts] = useState<Gift[]>([]);
-  const [giftForm, setGiftForm] = useState<GiftForm>(emptyGift);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function loadAdminData() {
-    const [confirmationsResponse, giftsResponse] = await Promise.all([
-      fetch("/api/admin/confirmations"),
-      fetch("/api/admin/gifts")
-    ]);
+    const confirmationsResponse = await fetch("/api/admin/confirmations");
 
-    if (confirmationsResponse.status === 401 || giftsResponse.status === 401) {
+    if (confirmationsResponse.status === 401) {
       setIsAuthed(false);
       return;
     }
@@ -41,11 +21,6 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
     if (confirmationsResponse.ok) {
       const data = await confirmationsResponse.json();
       setConfirmations(data.confirmations || []);
-    }
-
-    if (giftsResponse.ok) {
-      const data = await giftsResponse.json();
-      setGifts(data.gifts || []);
     }
   }
 
@@ -78,63 +53,6 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setIsAuthed(false);
-  }
-
-  async function addGift(event: React.FormEvent) {
-    event.preventDefault();
-    setError("");
-    setMessage("");
-    setLoading(true);
-    const response = await fetch("/api/admin/gifts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(giftForm)
-    });
-    const data = await response.json();
-    setLoading(false);
-
-    if (!response.ok) {
-      setError(data.error || "Nao foi possivel adicionar o presente.");
-      return;
-    }
-
-    setGiftForm(emptyGift);
-    setMessage("Presente adicionado com sucesso.");
-    await loadAdminData();
-  }
-
-  async function updateGift(gift: Gift, status: Gift["status"]) {
-    setError("");
-    setMessage("");
-    const response = await fetch(`/api/admin/gifts/${gift.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status })
-    });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setError(data.error || "Nao foi possivel atualizar o presente.");
-      return;
-    }
-
-    setMessage("Presente atualizado.");
-    await loadAdminData();
-  }
-
-  async function releaseGift(gift: Gift) {
-    setError("");
-    setMessage("");
-    const response = await fetch(`/api/admin/gifts/${gift.id}/release`, { method: "POST" });
-    const data = await response.json();
-
-    if (!response.ok) {
-      setError(data.error || "Nao foi possivel liberar o presente.");
-      return;
-    }
-
-    setMessage("Presente liberado.");
-    await loadAdminData();
   }
 
   if (!isAuthed) {
@@ -178,53 +96,9 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
           </button>
         </header>
 
-        {message && <p className="message success">{message}</p>}
         {error && <p className="message error">{error}</p>}
 
         <div className="admin-grid">
-          <section className="panel">
-            <h2>Adicionar presente</h2>
-            <form className="form-grid" onSubmit={addGift}>
-              <label className="field">
-                <span>Nome</span>
-                <input
-                  value={giftForm.name}
-                  onChange={(eventChange) => setGiftForm({ ...giftForm, name: eventChange.target.value })}
-                  required
-                />
-              </label>
-              <label className="field">
-                <span>Categoria</span>
-                <select
-                  value={giftForm.category}
-                  onChange={(eventChange) => setGiftForm({ ...giftForm, category: eventChange.target.value })}
-                >
-                  <option>Cozinha</option>
-                  <option>Banheiro</option>
-                  <option>Quarto</option>
-                  <option>Area de servico</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Descricao curta</span>
-                <input
-                  value={giftForm.description}
-                  onChange={(eventChange) => setGiftForm({ ...giftForm, description: eventChange.target.value })}
-                />
-              </label>
-              <label className="field">
-                <span>Link de referencia</span>
-                <input
-                  value={giftForm.reference_link}
-                  onChange={(eventChange) => setGiftForm({ ...giftForm, reference_link: eventChange.target.value })}
-                />
-              </label>
-              <button className="primary-button" disabled={loading} type="submit">
-                Adicionar presente
-              </button>
-            </form>
-          </section>
-
           <section className="panel">
             <h2>Confirmacoes</h2>
             <div className="table-wrap">
@@ -233,7 +107,6 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                   <tr>
                     <th>Nome</th>
                     <th>Telefone</th>
-                    <th>Acompanhantes</th>
                     <th>Recado</th>
                     <th>Confirmado em</th>
                     <th>Token</th>
@@ -245,55 +118,10 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                     <tr key={confirmation.id}>
                       <td>{confirmation.name}</td>
                       <td>{confirmation.phone}</td>
-                      <td>{confirmation.companions || 0}</td>
                       <td>{confirmation.notes || "-"}</td>
                       <td>{new Date(confirmation.confirmed_at).toLocaleString("pt-BR")}</td>
                       <td>{confirmation.visitor_token.slice(0, 12)}...</td>
                       <td>{confirmation.duplicate_status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2>Presentes</h2>
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Presente</th>
-                    <th>Categoria</th>
-                    <th>Status</th>
-                    <th>Reservado por</th>
-                    <th>Acoes</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gifts.map((gift) => (
-                    <tr key={gift.id}>
-                      <td>{gift.name}</td>
-                      <td>{gift.category}</td>
-                      <td>{gift.status}</td>
-                      <td>{gift.guest_confirmations?.name || "-"}</td>
-                      <td style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                        {gift.status === "RESERVADO" && (
-                          <button className="secondary-button" onClick={() => releaseGift(gift)} type="button">
-                            Liberar
-                          </button>
-                        )}
-                        {gift.status !== "INATIVO" && (
-                          <button className="secondary-button" onClick={() => updateGift(gift, "INATIVO")} type="button">
-                            Inativar
-                          </button>
-                        )}
-                        {gift.status === "INATIVO" && (
-                          <button className="secondary-button" onClick={() => updateGift(gift, "DISPONIVEL")} type="button">
-                            Reativar
-                          </button>
-                        )}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
