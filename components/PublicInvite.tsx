@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import type { Confirmation, EventInfo, StoryItem } from "@/lib/types";
 
 type Props = {
@@ -12,6 +13,32 @@ const TOKEN_KEY = "cha_panela_visitor_token";
 const FLORAL_IMAGE = "/images/floral-blue.png";
 const PIX_COPY_PASTE = "00020126580014BR.GOV.BCB.PIX013617f83fe0-d15f-4d9a-958b-cd66c327c6005204000053039865802BR5925Joao Victor Barbosa da Co6009SAO PAULO621405104nBybVsQt463048A00";
 const PIX_QR_CODE_IMAGE = "/images/pix-qrcode.svg";
+const PETALS = [
+  { left: "4%", delay: "-7s", duration: "13s", size: "20px", drift: "38px" },
+  { left: "12%", delay: "-1s", duration: "15s", size: "15px", drift: "-24px" },
+  { left: "20%", delay: "-10s", duration: "14s", size: "18px", drift: "34px" },
+  { left: "29%", delay: "-4s", duration: "16s", size: "14px", drift: "-30px" },
+  { left: "38%", delay: "-12s", duration: "13s", size: "19px", drift: "28px" },
+  { left: "47%", delay: "-3s", duration: "17s", size: "16px", drift: "-36px" },
+  { left: "56%", delay: "-8s", duration: "14s", size: "21px", drift: "30px" },
+  { left: "66%", delay: "-2s", duration: "16s", size: "15px", drift: "-28px" },
+  { left: "76%", delay: "-11s", duration: "15s", size: "18px", drift: "36px" },
+  { left: "86%", delay: "-5s", duration: "13s", size: "14px", drift: "-22px" },
+  { left: "94%", delay: "-9s", duration: "17s", size: "20px", drift: "26px" },
+  { left: "98%", delay: "-6s", duration: "14s", size: "13px", drift: "-20px" }
+];
+const CONFETTI = [
+  { left: "45%", top: "44%", x: "-92px", y: "-86px", rotate: "-24deg", color: "#b07a5a", delay: "0s" },
+  { left: "48%", top: "42%", x: "-42px", y: "-118px", rotate: "18deg", color: "#d6a989", delay: "0.03s" },
+  { left: "50%", top: "44%", x: "12px", y: "-126px", rotate: "58deg", color: "#6f879e", delay: "0.01s" },
+  { left: "53%", top: "42%", x: "64px", y: "-106px", rotate: "-48deg", color: "#8a5a3e", delay: "0.05s" },
+  { left: "55%", top: "46%", x: "104px", y: "-68px", rotate: "32deg", color: "#d4ba94", delay: "0.02s" },
+  { left: "47%", top: "48%", x: "-78px", y: "-34px", rotate: "76deg", color: "#3f5872", delay: "0.06s" },
+  { left: "51%", top: "48%", x: "36px", y: "-48px", rotate: "-82deg", color: "#b07a5a", delay: "0.04s" },
+  { left: "54%", top: "48%", x: "84px", y: "-20px", rotate: "42deg", color: "#d6a989", delay: "0.08s" },
+  { left: "49%", top: "45%", x: "-10px", y: "-88px", rotate: "-12deg", color: "#6f879e", delay: "0.07s" },
+  { left: "52%", top: "45%", x: "28px", y: "-96px", rotate: "64deg", color: "#8a5a3e", delay: "0.09s" }
+];
 
 const Icon = {
   Calendar: () => (
@@ -163,7 +190,7 @@ function StoryStrip({ event }: { event: EventInfo }) {
   const beats = getStoryItems(event);
 
   return (
-    <section className="story story-with-photo" aria-labelledby="story-title">
+    <section className="story story-with-photo section-reveal" aria-labelledby="story-title">
       <div className="section-head">
         <p className="kicker">{event.story_kicker || "A nossa história"}</p>
         <h2 id="story-title">{event.story_title || "De um café para uma vida juntos"}</h2>
@@ -209,9 +236,67 @@ function FloralImage({ className }: { className: string }) {
   );
 }
 
+function HeroPetals() {
+  return (
+    <div className="hero-petals" aria-hidden="true">
+      {PETALS.map((petal, index) => (
+        <span
+          className="hero-petal"
+          key={`${petal.left}-${index}`}
+          style={{
+            "--petal-left": petal.left,
+            "--petal-delay": petal.delay,
+            "--petal-duration": petal.duration,
+            "--petal-size": petal.size,
+            "--petal-drift": petal.drift
+          } as CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ConfirmConfetti({ active }: { active: boolean }) {
+  if (!active) return null;
+
+  return (
+    <div className="confirm-confetti" aria-hidden="true">
+      {CONFETTI.map((piece, index) => (
+        <span
+          className="confetti-piece"
+          key={`${piece.x}-${index}`}
+          style={{
+            "--confetti-left": piece.left,
+            "--confetti-top": piece.top,
+            "--confetti-x": piece.x,
+            "--confetti-y": piece.y,
+            "--confetti-rotate": piece.rotate,
+            "--confetti-color": piece.color,
+            "--confetti-delay": piece.delay
+          } as CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
+function InviteIntro({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+
+  return (
+    <div className="invite-intro" aria-label="Mensagem de boas-vindas">
+      <div className="intro-mist" aria-hidden="true" />
+      <p className="intro-prompt">
+        <span>Será uma alegria celebrar...</span>
+        <span>esse dia tão especial ao seu lado!</span>
+      </p>
+    </div>
+  );
+}
+
 function PhotoBanner() {
   return (
-    <section className="banner" aria-hidden="true">
+    <section className="banner section-reveal" aria-hidden="true">
       <Image
         src="/images/danca.jpg"
         alt=""
@@ -228,18 +313,25 @@ function PhotoBanner() {
 }
 
 export function PublicInvite({ event }: Props) {
+  const [showIntro, setShowIntro] = useState(true);
   const [visitorToken, setVisitorToken] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
+  const [showConfetti, setShowConfetti] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const rsvpRef = useRef<HTMLElement>(null);
   const pixRef = useRef<HTMLElement>(null);
-  const hasScrolledToPixRef = useRef(false);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = setTimeout(() => setShowIntro(false), reduceMotion ? 1800 : 6500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const loadState = useCallback(async (token: string) => {
     const meResponse = await fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`);
@@ -256,6 +348,29 @@ export function PublicInvite({ event }: Props) {
     loadState(token).catch(() => setError("Não conseguimos carregar seus dados agora."));
   }, [loadState]);
 
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>(".section-reveal"));
+    if (!sections.length) return;
+
+    sections.forEach((section) => section.classList.add("reveal-ready"));
+
+    if (!("IntersectionObserver" in window)) {
+      sections.forEach((section) => section.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { rootMargin: "0px 0px -12% 0px", threshold: 0.15 });
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, []);
+
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -264,14 +379,6 @@ export function PublicInvite({ event }: Props) {
     if (phone) return;
     setPhone(formatPhone("21"));
   }
-
-  useEffect(() => {
-    if (!confirmation || hasScrolledToPixRef.current) return;
-
-    hasScrolledToPixRef.current = true;
-    const timer = setTimeout(() => jumpTo(pixRef), 250);
-    return () => clearTimeout(timer);
-  }, [confirmation]);
 
   async function copyPix() {
     try {
@@ -319,13 +426,20 @@ export function PublicInvite({ event }: Props) {
     }
 
     setConfirmation(data.confirmation);
+    setShowConfetti(true);
     setMessage("Presença confirmada! O Pix ficou logo abaixo para quem quiser enviar um carinho.");
     await loadState(visitorToken);
+    setTimeout(() => {
+      setShowConfetti(false);
+      jumpTo(pixRef);
+    }, 1400);
   }
 
   return (
     <main className="app heading-script">
+      <InviteIntro visible={showIntro} />
       <section className="hero">
+        <HeroPetals />
         <Image
           src="/images/danca.jpg"
           alt={`Foto de ${event.couple_name}`}
@@ -387,7 +501,8 @@ export function PublicInvite({ event }: Props) {
 
       <StoryStrip event={event} />
 
-      <section id="confirmar" className="rsvp" ref={rsvpRef}>
+      <section id="confirmar" className="rsvp section-reveal" ref={rsvpRef}>
+        <ConfirmConfetti active={showConfetti} />
         <div className="section-head">
           <p className="kicker">{confirmation ? "Presença confirmada" : "Confirme sua presença"}</p>
           <h2>{confirmation ? `Que alegria, ${confirmation.name.split(" ")[0]}!` : "É rapidinho"}</h2>
@@ -451,7 +566,7 @@ export function PublicInvite({ event }: Props) {
         {error && <p className="message error">{error}</p>}
       </section>
 
-      <section id="pix" className="pix-section" ref={pixRef}>
+      <section id="pix" className="pix-section section-reveal" ref={pixRef}>
         {confirmation ? (
           <>
             <div className="section-head">
@@ -497,7 +612,7 @@ export function PublicInvite({ event }: Props) {
 
       <PhotoBanner />
 
-      <footer className="foot">
+      <footer className="foot section-reveal">
         <FloralImage className="foot-floral-left" />
         <FloralImage className="foot-floral-right" />
         <p className="foot-script">Com carinho,</p>
