@@ -313,7 +313,8 @@ function PhotoBanner() {
 }
 
 export function PublicInvite({ event }: Props) {
-  const [showIntro, setShowIntro] = useState(true);
+  const [showIntro, setShowIntro] = useState(false);
+  const [hasLoadedState, setHasLoadedState] = useState(false);
   const [visitorToken, setVisitorToken] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [name, setName] = useState("");
@@ -328,24 +329,39 @@ export function PublicInvite({ event }: Props) {
   const pixRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    if (!showIntro) return;
+
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = setTimeout(() => setShowIntro(false), reduceMotion ? 1800 : 11800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [showIntro]);
 
   const loadState = useCallback(async (token: string) => {
     const meResponse = await fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`);
 
     if (meResponse.ok) {
       const data = await meResponse.json();
-      setConfirmation(data.confirmation);
+      const loadedConfirmation = data.confirmation ?? null;
+      setConfirmation(loadedConfirmation);
+      return loadedConfirmation as Confirmation | null;
     }
+
+    return null;
   }, [event.public_slug]);
 
   useEffect(() => {
     const token = getToken();
     setVisitorToken(token);
-    loadState(token).catch(() => setError("Não conseguimos carregar seus dados agora."));
+    loadState(token)
+      .then((loadedConfirmation) => {
+        setShowIntro(!loadedConfirmation);
+        setHasLoadedState(true);
+      })
+      .catch(() => {
+        setError("Não conseguimos carregar seus dados agora.");
+        setShowIntro(true);
+        setHasLoadedState(true);
+      });
   }, [loadState]);
 
   useEffect(() => {
@@ -434,6 +450,8 @@ export function PublicInvite({ event }: Props) {
       jumpTo(pixRef);
     }, 1400);
   }
+
+  if (!hasLoadedState) return null;
 
   return (
     <main className="app heading-script">
