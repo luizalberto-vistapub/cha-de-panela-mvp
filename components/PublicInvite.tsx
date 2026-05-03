@@ -11,7 +11,7 @@ type Props = {
 const TOKEN_KEY = "cha_panela_visitor_token";
 const FLORAL_IMAGE = "/images/floral-blue.png";
 const PIX_COPY_PASTE = "00020126580014BR.GOV.BCB.PIX013617f83fe0-d15f-4d9a-958b-cd66c327c6005204000053039865802BR5925Joao Victor Barbosa da Co6009SAO PAULO621405104nBybVsQt463048A00";
-const PIX_QR_CODE_IMAGE = `https://api.qrserver.com/v1/create-qr-code/?size=520x520&data=${encodeURIComponent(PIX_COPY_PASTE)}`;
+const PIX_QR_CODE_IMAGE = "/images/pix-qrcode.svg";
 
 const Icon = {
   Calendar: () => (
