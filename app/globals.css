@@ -680,6 +680,12 @@ body::before {
   font-size: 0.92rem;
 }
 
+.event-meta a {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
 .event-meta svg {
   flex: 0 0 auto;
   color: var(--accent);
@@ -946,6 +952,7 @@ body::before {
   border-radius: 4px;
   background: var(--paper);
   padding: 2rem clamp(1.25rem, 3vw, 2.4rem);
+  font-family: var(--sans);
   box-shadow: var(--shadow-md);
 }
 
@@ -997,6 +1004,12 @@ body::before {
   padding: 0.55rem 0.1rem;
   font-family: var(--serif);
   font-size: 1.08rem;
+}
+
+.rsvp-form .field input,
+.rsvp-form .field textarea,
+.rsvp-form .field select {
+  font-family: var(--sans);
 }
 
 .field textarea {
@@ -1363,10 +1376,6 @@ body::before {
   background: var(--paper);
   padding: clamp(1.25rem, 3vw, 2rem);
   box-shadow: var(--shadow-md);
-}
-
-.pix-card.is-locked {
-  opacity: 0.76;
 }
 
 .pix-qr {

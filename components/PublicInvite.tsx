@@ -81,6 +81,10 @@ function formatPhone(value: string) {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
+function getMapUrl(place: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+}
+
 function useCountdown(target: Date) {
   const [now, setNow] = useState<Date | null>(null);
 
@@ -353,7 +357,7 @@ export function PublicInvite({ event }: Props) {
               <Icon.Clock /> <span><b>{event.event_time}</b> &middot; recepção com carinho</span>
             </li>
             <li>
-              <Icon.Pin /> <span>{event.event_place}</span>
+              <Icon.Pin /> <a href={getMapUrl(event.event_place)} target="_blank" rel="noreferrer">{event.event_place}</a>
             </li>
           </ul>
           <Countdown event={event} />
@@ -432,45 +436,47 @@ export function PublicInvite({ event }: Props) {
       </section>
 
       <section id="pix" className="pix-section" ref={pixRef}>
-        <div className="section-head">
-          <p className="kicker">Presente por Pix</p>
-          <h2>Seu carinho ajuda a realizar nossos sonhos</h2>
-          <div className="lede pix-lede">
-            <p>Estamos muito felizes em compartilhar esse momento tão especial com você!</p>
-            <p>Sua presença é o nosso maior presente 💕</p>
-            <p>Mas, se desejar nos presentear, ficaremos muito gratos com uma contribuição via Pix para realizarmos nossos sonhos juntos!</p>
-          </div>
-        </div>
+        {confirmation ? (
+          <>
+            <div className="section-head">
+              <p className="kicker">Presente por Pix</p>
+              <h2>Seu carinho ajuda a realizar nossos sonhos</h2>
+              <div className="lede pix-lede">
+                <p>Estamos muito felizes em compartilhar esse momento tão especial com você!</p>
+                <p>Sua presença é o nosso maior presente 💕</p>
+                <p>Mas, se desejar nos presentear, ficaremos muito gratos com uma contribuição via Pix para realizarmos nossos sonhos juntos!</p>
+              </div>
+            </div>
 
-        {!confirmation && (
+            <div className="pix-card">
+              <div className="pix-qr">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={PIX_QR_CODE_IMAGE}
+                  alt="QR Code para pagamento via Pix"
+                />
+              </div>
+              <div className="pix-details">
+                <p className="pix-owner">João Victor Barbosa da Co</p>
+                <p className="pix-copy">
+                  Escaneie o QR Code ou copie o Pix copia e cola.
+                </p>
+                <div className="pix-code" aria-label="Pix copia e cola">
+                  {PIX_COPY_PASTE}
+                </div>
+                <button className="btn btn-primary" onClick={copyPix} type="button">
+                  Copiar o Pix
+                </button>
+                {copyStatus && <p className="message success">{copyStatus}</p>}
+              </div>
+            </div>
+          </>
+        ) : (
           <div className="gate">
             <span className="gate-dot" />
-            Confirme sua presença ali em cima para liberar o Pix.
+            Confirme sua presença ali em cima para liberar a lista de presente.
           </div>
         )}
-
-        <div className={`pix-card ${!confirmation ? "is-locked" : ""}`}>
-          <div className="pix-qr">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={PIX_QR_CODE_IMAGE}
-              alt="QR Code para pagamento via Pix"
-            />
-          </div>
-          <div className="pix-details">
-            <p className="pix-owner">João Victor Barbosa da Co</p>
-            <p className="pix-copy">
-              Escaneie o QR Code ou copie o Pix copia e cola.
-            </p>
-            <div className="pix-code" aria-label="Pix copia e cola">
-              {PIX_COPY_PASTE}
-            </div>
-            <button className="btn btn-primary" disabled={!confirmation} onClick={copyPix} type="button">
-              Copiar o Pix
-            </button>
-            {copyStatus && <p className="message success">{copyStatus}</p>}
-          </div>
-        </div>
       </section>
 
       <PhotoBanner />
