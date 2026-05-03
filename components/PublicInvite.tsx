@@ -239,6 +239,7 @@ export function PublicInvite({ event }: Props) {
   const [loading, setLoading] = useState(false);
   const rsvpRef = useRef<HTMLElement>(null);
   const pixRef = useRef<HTMLElement>(null);
+  const hasScrolledToPixRef = useRef(false);
 
   const loadState = useCallback(async (token: string) => {
     const meResponse = await fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`);
@@ -258,6 +259,19 @@ export function PublicInvite({ event }: Props) {
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  function fillDefaultPhoneDdd() {
+    if (phone) return;
+    setPhone(formatPhone("21"));
+  }
+
+  useEffect(() => {
+    if (!confirmation || hasScrolledToPixRef.current) return;
+
+    hasScrolledToPixRef.current = true;
+    const timer = setTimeout(() => jumpTo(pixRef), 250);
+    return () => clearTimeout(timer);
+  }, [confirmation]);
 
   async function copyPix() {
     try {
@@ -307,7 +321,6 @@ export function PublicInvite({ event }: Props) {
     setConfirmation(data.confirmation);
     setMessage("Presença confirmada! O Pix ficou logo abaixo para quem quiser enviar um carinho.");
     await loadState(visitorToken);
-    setTimeout(() => jumpTo(pixRef), 250);
   }
 
   return (
@@ -389,9 +402,11 @@ export function PublicInvite({ event }: Props) {
           <div className="rsvp-success">
             <div className="success-badge"><Icon.Check /></div>
             <p>
-              Confirmamos pelo telefone <b>{confirmation.phone}</b>.
+              Confirmamos pelo telefone <b className="phone-number">{confirmation.phone}</b>.
             </p>
-            <p className="rsvp-next">O Pix ficou logo abaixo para quem quiser enviar um carinho. &darr;</p>
+            <button className="rsvp-next" onClick={() => jumpTo(pixRef)} type="button">
+              O Pix ficou logo abaixo para quem quiser enviar um carinho. &darr;
+            </button>
           </div>
         ) : (
           <form className="rsvp-form" onSubmit={confirmPresence} noValidate>
@@ -409,8 +424,9 @@ export function PublicInvite({ event }: Props) {
               <input
                 autoComplete="tel"
                 inputMode="tel"
-                placeholder="(11) 99999-9999"
+                placeholder="(21) 99999-9999"
                 value={phone}
+                onFocus={fillDefaultPhoneDdd}
                 onChange={(eventChange) => setPhone(formatPhone(eventChange.target.value))}
               />
             </label>
