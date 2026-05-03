@@ -617,7 +617,7 @@ export function PublicInvite({ event }: Props) {
         <FloralImage className="foot-floral-right" />
         <p className="foot-script">Com carinho,</p>
         <p className="foot-couple">{event.couple_name}</p>
-        <p className="foot-meta">20 &middot; 06 &middot; 2026 &middot; São Paulo</p>
+        <p className="foot-meta">08 &middot; 07 &middot; 2026 &middot; Rio de Janeiro</p>
       </footer>
     </main>
   );
