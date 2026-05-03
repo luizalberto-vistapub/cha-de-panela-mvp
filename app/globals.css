@@ -482,7 +482,7 @@ body::before {
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 250, 241, 0.78), rgba(251, 236, 210, 0.94) 48%, rgba(246, 225, 191, 0.98) 100%);
   pointer-events: auto;
-  animation: introCurtain 6.3s ease forwards;
+  animation: introCurtain 11.6s ease forwards;
 }
 
 .intro-mist {
@@ -496,23 +496,23 @@ body::before {
   filter: blur(18px);
   opacity: 0.92;
   transform: translateX(-5%);
-  animation: mistDrift 6.1s ease forwards;
+  animation: mistDrift 11.4s ease forwards;
 }
 
 .intro-prompt {
   position: relative;
   z-index: 1;
-  width: min(92vw, 58rem);
-  color: var(--blue-deep);
-  font-family: var(--sans);
-  font-size: clamp(1rem, 2.4vw, 1.35rem);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  line-height: 1.7;
+  width: min(86vw, 44rem);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: clamp(1.45rem, 3.4vw, 2.35rem);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.45;
   text-align: center;
-  text-transform: uppercase;
   white-space: normal;
-  animation: promptLift 0.9s ease 5s forwards;
+  animation: promptLift 0.9s ease 10.7s forwards;
 }
 
 .intro-prompt span {
@@ -521,7 +521,7 @@ body::before {
   max-width: 100%;
   margin: 0 auto;
   overflow: hidden;
-  border-right: 1px solid rgba(63, 88, 114, 0.6);
+  border-right: 1px solid rgba(176, 122, 90, 0.52);
   opacity: 0;
   white-space: nowrap;
   clip-path: inset(0 100% 0 0);
@@ -529,19 +529,19 @@ body::before {
 
 .intro-prompt span:nth-child(1) {
   animation:
-    promptType 1.9s steps(31, end) 0.75s forwards,
-    promptCaret 0.7s step-end 0.75s 3 forwards;
+    promptType 3.25s steps(31, end) 0.85s forwards,
+    promptCaret 0.75s step-end 0.85s 5 forwards;
 }
 
 .intro-prompt span:nth-child(2) {
   animation:
-    promptType 2.35s steps(38, end) 2.95s forwards,
-    promptCaret 0.7s step-end 2.95s 4 forwards;
+    promptType 4s steps(40, end) 4.65s forwards,
+    promptCaret 0.75s step-end 4.65s 6 forwards;
 }
 
 @keyframes introCurtain {
   0%,
-  84% {
+  93% {
     opacity: 1;
     clip-path: inset(0 0 0 0);
   }

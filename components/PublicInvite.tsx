@@ -288,7 +288,7 @@ function InviteIntro({ visible }: { visible: boolean }) {
       <div className="intro-mist" aria-hidden="true" />
       <p className="intro-prompt">
         <span>Será uma alegria celebrar...</span>
-        <span>esse dia tão especial ao seu lado!</span>
+        <span>esse dia tão especial ao seu lado!&nbsp;&nbsp;</span>
       </p>
     </div>
   );
@@ -329,7 +329,7 @@ export function PublicInvite({ event }: Props) {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timer = setTimeout(() => setShowIntro(false), reduceMotion ? 1800 : 6500);
+    const timer = setTimeout(() => setShowIntro(false), reduceMotion ? 1800 : 11800);
     return () => clearTimeout(timer);
   }, []);
 
