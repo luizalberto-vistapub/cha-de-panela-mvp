@@ -514,7 +514,7 @@ body::before {
   place-items: center;
   width: 3rem;
   height: 3rem;
-  border: 1px solid var(--line-strong);
+  border: 0;
   border-radius: 50%;
   background: rgba(255, 250, 241, 0.86);
   color: var(--accent-deep);
@@ -537,7 +537,6 @@ body::before {
 }
 
 .music-toggle.is-playing {
-  border-color: var(--accent);
   background: var(--accent);
   color: var(--paper);
   opacity: 0.78;
