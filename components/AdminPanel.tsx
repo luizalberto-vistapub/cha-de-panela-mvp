@@ -110,7 +110,7 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
       <section className="admin-container">
         <header className="admin-header">
           <div>
-            <p className="eyebrow">Cha de Panela</p>
+            <p className="eyebrow">Casamento</p>
             <h1 className="section-heading">Painel admin</h1>
           </div>
           <button className="secondary-button" onClick={logout} type="button">
@@ -158,6 +158,40 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="confirmation-card-list" aria-label="Confirmacoes">
+              {confirmations.map((confirmation) => (
+                <article className="confirmation-card" key={confirmation.id}>
+                  <div className="confirmation-card-head">
+                    <div>
+                      <h3>{confirmation.name}</h3>
+                      <a href={`tel:${confirmation.phone.replace(/\D/g, "")}`}>{confirmation.phone}</a>
+                    </div>
+                    <span>{confirmation.duplicate_status}</span>
+                  </div>
+                  <dl className="confirmation-card-details">
+                    <div>
+                      <dt>Recado</dt>
+                      <dd>{confirmation.notes || "-"}</dd>
+                    </div>
+                    <div>
+                      <dt>Confirmado em</dt>
+                      <dd>{new Date(confirmation.confirmed_at).toLocaleString("pt-BR")}</dd>
+                    </div>
+                    <div>
+                      <dt>Token</dt>
+                      <dd>{confirmation.visitor_token.slice(0, 12)}...</dd>
+                    </div>
+                  </dl>
+                  <button
+                    className="danger-button btn-sm confirmation-card-remove"
+                    onClick={() => setConfirmationToRemove(confirmation)}
+                    type="button"
+                  >
+                    Remover
+                  </button>
+                </article>
+              ))}
             </div>
           </section>
         </div>

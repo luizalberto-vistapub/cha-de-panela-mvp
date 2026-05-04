@@ -18,6 +18,8 @@ const MUSIC_START_SECONDS = 45;
 const MUSIC_END_SECONDS = 105;
 const MUSIC_FADE_SECONDS = 4;
 const MUSIC_MAX_VOLUME = 0.42;
+const READING_SCROLL_DELAY_MS = 2500;
+const READING_SCROLL_SPEED = 42;
 const PETALS = [
   { left: "4%", delay: "-7s", duration: "13s", size: "20px", drift: "38px" },
   { left: "12%", delay: "-1s", duration: "15s", size: "15px", drift: "-24px" },
@@ -309,16 +311,30 @@ function ConfirmConfetti({ active }: { active: boolean }) {
   );
 }
 
-function InviteIntro({ visible }: { visible: boolean }) {
+function InviteIntro({
+  onStart,
+  started,
+  visible
+}: {
+  onStart: () => void;
+  started: boolean;
+  visible: boolean;
+}) {
   if (!visible) return null;
 
   return (
-    <div className="invite-intro" aria-label="Mensagem de boas-vindas">
+    <div className={`invite-intro ${started ? "is-started" : ""}`} aria-label="Mensagem de boas-vindas">
       <div className="intro-mist" aria-hidden="true" />
+      {started ? (
       <p className="intro-prompt">
         <span>Será uma alegria celebrar...</span>
         <span>esse dia tão especial ao seu lado!&nbsp;&nbsp;</span>
       </p>
+      ) : (
+        <button className="btn btn-primary intro-start-button" onClick={onStart} type="button">
+          Convite
+        </button>
+      )}
     </div>
   );
 }
@@ -343,6 +359,7 @@ function PhotoBanner() {
 
 export function PublicInvite({ event }: Props) {
   const [showIntro, setShowIntro] = useState(true);
+  const [introStarted, setIntroStarted] = useState(false);
   const [visitorToken, setVisitorToken] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [name, setName] = useState("");
@@ -358,12 +375,19 @@ export function PublicInvite({ event }: Props) {
   const pixRef = useRef<HTMLElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const musicFrameRef = useRef<number | null>(null);
+  const readingScrollFrameRef = useRef<number | null>(null);
+  const readingScrollTimeoutRef = useRef<number | null>(null);
+  const readingScrollDisabledRef = useRef(false);
+  const readingScrollReadyRef = useRef(false);
+  const readingScrollLastTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
+    if (!introStarted) return;
+
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = setTimeout(() => setShowIntro(false), reduceMotion ? 1800 : 11800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [introStarted]);
 
   const loadState = useCallback(async (token: string) => {
     const meResponse = await fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`);
@@ -406,14 +430,78 @@ export function PublicInvite({ event }: Props) {
   useEffect(() => {
     return () => {
       if (musicFrameRef.current !== null) cancelAnimationFrame(musicFrameRef.current);
+      if (readingScrollFrameRef.current !== null) cancelAnimationFrame(readingScrollFrameRef.current);
+      if (readingScrollTimeoutRef.current !== null) window.clearTimeout(readingScrollTimeoutRef.current);
     };
   }, []);
 
   useEffect(() => {
-    void startMusic(false);
-    // The intro should attempt the music once on first paint; browser autoplay rules may still block it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    function stopReadingScroll() {
+      if (!readingScrollReadyRef.current) return;
+
+      readingScrollDisabledRef.current = true;
+
+      if (readingScrollFrameRef.current !== null) {
+        cancelAnimationFrame(readingScrollFrameRef.current);
+        readingScrollFrameRef.current = null;
+      }
+
+      if (readingScrollTimeoutRef.current !== null) {
+        window.clearTimeout(readingScrollTimeoutRef.current);
+        readingScrollTimeoutRef.current = null;
+      }
+    }
+
+    window.addEventListener("pointerdown", stopReadingScroll, { capture: true });
+    window.addEventListener("click", stopReadingScroll, { capture: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", stopReadingScroll, { capture: true });
+      window.removeEventListener("click", stopReadingScroll, { capture: true });
+    };
   }, []);
+
+  useEffect(() => {
+    if (showIntro || readingScrollDisabledRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    readingScrollReadyRef.current = true;
+
+    function step(timestamp: number) {
+      if (readingScrollDisabledRef.current) return;
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (window.scrollY >= maxScroll - 1) {
+        readingScrollFrameRef.current = null;
+        return;
+      }
+
+      const lastTime = readingScrollLastTimeRef.current ?? timestamp;
+      const elapsedSeconds = Math.min((timestamp - lastTime) / 1000, 0.12);
+      readingScrollLastTimeRef.current = timestamp;
+      window.scrollBy(0, READING_SCROLL_SPEED * elapsedSeconds);
+      readingScrollFrameRef.current = requestAnimationFrame(step);
+    }
+
+    readingScrollTimeoutRef.current = window.setTimeout(() => {
+      readingScrollTimeoutRef.current = null;
+      readingScrollLastTimeRef.current = null;
+      window.scrollBy(0, 1);
+      readingScrollFrameRef.current = requestAnimationFrame(step);
+    }, READING_SCROLL_DELAY_MS);
+
+    return () => {
+      if (readingScrollTimeoutRef.current !== null) {
+        window.clearTimeout(readingScrollTimeoutRef.current);
+        readingScrollTimeoutRef.current = null;
+      }
+
+      if (readingScrollFrameRef.current !== null) {
+        cancelAnimationFrame(readingScrollFrameRef.current);
+        readingScrollFrameRef.current = null;
+      }
+    };
+  }, [showIntro]);
 
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -474,6 +562,11 @@ export function PublicInvite({ event }: Props) {
     await startMusic(true);
   }
 
+  function startIntro() {
+    setIntroStarted(true);
+    void startMusic(true);
+  }
+
   async function copyPix() {
     try {
       await navigator.clipboard.writeText(PIX_COPY_PASTE);
@@ -531,7 +624,7 @@ export function PublicInvite({ event }: Props) {
 
   return (
     <main className="app heading-script">
-      <InviteIntro visible={showIntro} />
+      <InviteIntro onStart={startIntro} started={introStarted} visible={showIntro} />
       <audio ref={audioRef} preload="auto" src={MUSIC_SRC} />
       <button
         aria-label={musicPlaying ? "Pausar musica" : "Tocar musica"}

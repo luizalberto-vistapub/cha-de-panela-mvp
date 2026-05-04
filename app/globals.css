@@ -404,6 +404,10 @@ a {
   overflow-x: auto;
 }
 
+.confirmation-card-list {
+  display: none;
+}
+
 table {
   width: 100%;
   min-width: 44rem;
@@ -450,6 +454,84 @@ th {
   .admin-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .table-wrap {
+    display: none;
+  }
+
+  .confirmation-card-list {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .confirmation-card {
+    display: grid;
+    gap: 1rem;
+    border: 1px solid rgba(142, 96, 75, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 250, 241, 0.74);
+    padding: 1rem;
+    box-shadow: 0 10px 28px rgba(63, 51, 45, 0.08);
+  }
+
+  .confirmation-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .confirmation-card h3 {
+    margin: 0 0 0.2rem;
+    color: var(--terracotta);
+    font-size: 1.2rem;
+    line-height: 1.15;
+  }
+
+  .confirmation-card a {
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .confirmation-card-head span {
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: rgba(111, 135, 158, 0.14);
+    color: var(--blue-dark);
+    padding: 0.25rem 0.55rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .confirmation-card-details {
+    display: grid;
+    gap: 0.65rem;
+    margin: 0;
+  }
+
+  .confirmation-card-details div {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .confirmation-card-details dt {
+    color: var(--terracotta);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .confirmation-card-details dd {
+    margin: 0;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+  }
+
+  .confirmation-card-remove {
+    width: 100%;
   }
 }
 
@@ -556,6 +638,9 @@ body::before {
   background:
     radial-gradient(circle at 50% 42%, rgba(255, 250, 241, 0.78), rgba(251, 236, 210, 0.94) 48%, rgba(246, 225, 191, 0.98) 100%);
   pointer-events: auto;
+}
+
+.invite-intro.is-started {
   animation: introCurtain 11.6s ease forwards;
 }
 
@@ -570,7 +655,17 @@ body::before {
   filter: blur(18px);
   opacity: 0.92;
   transform: translateX(-5%);
+}
+
+.invite-intro.is-started .intro-mist {
   animation: mistDrift 11.4s ease forwards;
+}
+
+.intro-start-button {
+  position: relative;
+  z-index: 1;
+  min-width: 10rem;
+  animation: introButtonIn 0.8s ease both;
 }
 
 .intro-prompt {
@@ -611,6 +706,18 @@ body::before {
   animation:
     promptType 4s steps(40, end) 4.65s forwards,
     promptCaret 0.75s step-end 4.65s 6 forwards;
+}
+
+@keyframes introButtonIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes introCurtain {
