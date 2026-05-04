@@ -365,6 +365,8 @@ export function PublicInvite({ event }: Props) {
   }, [loadState]);
 
   useEffect(() => {
+    if (!hasLoadedState) return;
+
     const sections = Array.from(document.querySelectorAll<HTMLElement>(".section-reveal"));
     if (!sections.length) return;
 
@@ -385,7 +387,7 @@ export function PublicInvite({ event }: Props) {
 
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, []);
+  }, [hasLoadedState]);
 
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });

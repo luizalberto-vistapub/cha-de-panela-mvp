@@ -367,6 +367,39 @@ a {
   gap: 1rem;
 }
 
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(63, 51, 45, 0.42);
+  padding: 1rem;
+}
+
+.admin-modal {
+  width: min(100%, 30rem);
+}
+
+.admin-modal h2 {
+  margin: 0 0 0.8rem;
+  color: var(--terracotta);
+  font-size: 2rem;
+}
+
+.admin-modal-copy {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.admin-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

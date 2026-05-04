@@ -7,8 +7,10 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
   const [isAuthed, setIsAuthed] = useState(initialIsAuthed);
   const [password, setPassword] = useState("");
   const [confirmations, setConfirmations] = useState<Confirmation[]>([]);
+  const [confirmationToRemove, setConfirmationToRemove] = useState<Confirmation | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [removing, setRemoving] = useState(false);
 
   async function loadAdminData() {
     const confirmationsResponse = await fetch("/api/admin/confirmations");
@@ -53,6 +55,26 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setIsAuthed(false);
+  }
+
+  async function removeConfirmation() {
+    if (!confirmationToRemove) return;
+
+    setError("");
+    setRemoving(true);
+    const response = await fetch(`/api/admin/confirmations/${confirmationToRemove.id}`, {
+      method: "DELETE"
+    });
+    setRemoving(false);
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      setError(data?.error || "Nao foi possivel remover a confirmacao.");
+      return;
+    }
+
+    setConfirmations((current) => current.filter((confirmation) => confirmation.id !== confirmationToRemove.id));
+    setConfirmationToRemove(null);
   }
 
   if (!isAuthed) {
@@ -111,6 +133,7 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                     <th>Confirmado em</th>
                     <th>Token</th>
                     <th>Duplicidade</th>
+                    <th>Acoes</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -122,6 +145,15 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
                       <td>{new Date(confirmation.confirmed_at).toLocaleString("pt-BR")}</td>
                       <td>{confirmation.visitor_token.slice(0, 12)}...</td>
                       <td>{confirmation.duplicate_status}</td>
+                      <td>
+                        <button
+                          className="danger-button btn-sm"
+                          onClick={() => setConfirmationToRemove(confirmation)}
+                          type="button"
+                        >
+                          Remover
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -130,6 +162,44 @@ export function AdminPanel({ initialIsAuthed }: { initialIsAuthed: boolean }) {
           </section>
         </div>
       </section>
+
+      {confirmationToRemove && (
+        <div
+          className="admin-modal-backdrop"
+          onClick={() => {
+            if (!removing) setConfirmationToRemove(null);
+          }}
+          role="presentation"
+        >
+          <section
+            aria-labelledby="remove-confirmation-title"
+            aria-modal="true"
+            className="admin-modal panel"
+            onClick={(eventClick) => eventClick.stopPropagation()}
+            role="dialog"
+          >
+            <p className="eyebrow">Remover confirmacao</p>
+            <h2 id="remove-confirmation-title">Tem certeza?</h2>
+            <p className="admin-modal-copy">
+              Voce esta removendo a confirmacao de <b>{confirmationToRemove.name}</b>, telefone{" "}
+              <b>{confirmationToRemove.phone}</b>.
+            </p>
+            <div className="admin-modal-actions">
+              <button
+                className="secondary-button"
+                disabled={removing}
+                onClick={() => setConfirmationToRemove(null)}
+                type="button"
+              >
+                Cancelar
+              </button>
+              <button className="danger-button" disabled={removing} onClick={removeConfirmation} type="button">
+                {removing ? "Removendo..." : "Remover"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
