@@ -13,6 +13,11 @@ const TOKEN_KEY = "cha_panela_visitor_token";
 const FLORAL_IMAGE = "/images/floral-blue.png";
 const PIX_COPY_PASTE = "00020126580014BR.GOV.BCB.PIX013617f83fe0-d15f-4d9a-958b-cd66c327c6005204000053039865802BR5925Joao Victor Barbosa da Co6009SAO PAULO621405104nBybVsQt463048A00";
 const PIX_QR_CODE_IMAGE = "/images/pix-qrcode.svg";
+const MUSIC_SRC = "/audio/lift-me-up-albert-behar.mp3";
+const MUSIC_START_SECONDS = 45;
+const MUSIC_END_SECONDS = 105;
+const MUSIC_FADE_SECONDS = 4;
+const MUSIC_MAX_VOLUME = 0.42;
 const PETALS = [
   { left: "4%", delay: "-7s", duration: "13s", size: "20px", drift: "38px" },
   { left: "12%", delay: "-1s", duration: "15s", size: "15px", drift: "-24px" },
@@ -74,6 +79,13 @@ const Icon = {
       <rect x="3" y="9" width="18" height="11" rx="1.5" />
       <path d="M3 13h18M12 9v11M8 9c-1.5 0-3-1-3-2.5S6.5 4 8 4c2 0 4 5 4 5s2-5 4-5c1.5 0 3 1 3 2.5S17.5 9 16 9" />
     </svg>
+  ),
+  Music: () => (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l10-2v13" />
+      <circle cx="6" cy="18" r="3" />
+      <circle cx="16" cy="16" r="3" />
+    </svg>
   )
 };
 
@@ -110,6 +122,23 @@ function formatPhone(value: string) {
 
 function getMapUrl(place: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
+}
+
+function getMusicVolume(currentTime: number) {
+  if (currentTime < MUSIC_START_SECONDS || currentTime >= MUSIC_END_SECONDS) return 0;
+
+  const fadeInEnd = MUSIC_START_SECONDS + MUSIC_FADE_SECONDS;
+  const fadeOutStart = MUSIC_END_SECONDS - MUSIC_FADE_SECONDS;
+
+  if (currentTime < fadeInEnd) {
+    return ((currentTime - MUSIC_START_SECONDS) / MUSIC_FADE_SECONDS) * MUSIC_MAX_VOLUME;
+  }
+
+  if (currentTime > fadeOutStart) {
+    return Math.max((MUSIC_END_SECONDS - currentTime) / MUSIC_FADE_SECONDS, 0) * MUSIC_MAX_VOLUME;
+  }
+
+  return MUSIC_MAX_VOLUME;
 }
 
 function useCountdown(target: Date) {
@@ -313,8 +342,7 @@ function PhotoBanner() {
 }
 
 export function PublicInvite({ event }: Props) {
-  const [showIntro, setShowIntro] = useState(false);
-  const [hasLoadedState, setHasLoadedState] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
   const [visitorToken, setVisitorToken] = useState("");
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null);
   const [name, setName] = useState("");
@@ -322,51 +350,37 @@ export function PublicInvite({ event }: Props) {
   const [notes, setNotes] = useState("");
   const [copyStatus, setCopyStatus] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [musicPlaying, setMusicPlaying] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const rsvpRef = useRef<HTMLElement>(null);
   const pixRef = useRef<HTMLElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const musicFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!showIntro) return;
-
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = setTimeout(() => setShowIntro(false), reduceMotion ? 1800 : 11800);
     return () => clearTimeout(timer);
-  }, [showIntro]);
+  }, []);
 
   const loadState = useCallback(async (token: string) => {
     const meResponse = await fetch(`/api/public/me?slug=${event.public_slug}&visitorToken=${token}`);
 
     if (meResponse.ok) {
       const data = await meResponse.json();
-      const loadedConfirmation = data.confirmation ?? null;
-      setConfirmation(loadedConfirmation);
-      return loadedConfirmation as Confirmation | null;
+      setConfirmation(data.confirmation);
     }
-
-    return null;
   }, [event.public_slug]);
 
   useEffect(() => {
     const token = getToken();
     setVisitorToken(token);
-    loadState(token)
-      .then((loadedConfirmation) => {
-        setShowIntro(!loadedConfirmation);
-        setHasLoadedState(true);
-      })
-      .catch(() => {
-        setError("Não conseguimos carregar seus dados agora.");
-        setShowIntro(true);
-        setHasLoadedState(true);
-      });
+    loadState(token).catch(() => setError("Não conseguimos carregar seus dados agora."));
   }, [loadState]);
 
   useEffect(() => {
-    if (!hasLoadedState) return;
-
     const sections = Array.from(document.querySelectorAll<HTMLElement>(".section-reveal"));
     if (!sections.length) return;
 
@@ -387,7 +401,19 @@ export function PublicInvite({ event }: Props) {
 
     sections.forEach((section) => observer.observe(section));
     return () => observer.disconnect();
-  }, [hasLoadedState]);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (musicFrameRef.current !== null) cancelAnimationFrame(musicFrameRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    void startMusic(false);
+    // The intro should attempt the music once on first paint; browser autoplay rules may still block it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -396,6 +422,56 @@ export function PublicInvite({ event }: Props) {
   function fillDefaultPhoneDdd() {
     if (phone) return;
     setPhone(formatPhone("21"));
+  }
+
+  function cancelMusicFrame() {
+    if (musicFrameRef.current === null) return;
+    cancelAnimationFrame(musicFrameRef.current);
+    musicFrameRef.current = null;
+  }
+
+  function syncMusicLoop() {
+    const audio = audioRef.current;
+    if (!audio || audio.paused) return;
+
+    if (audio.currentTime < MUSIC_START_SECONDS || audio.currentTime >= MUSIC_END_SECONDS) {
+      audio.currentTime = MUSIC_START_SECONDS;
+    }
+
+    audio.volume = getMusicVolume(audio.currentTime);
+    musicFrameRef.current = requestAnimationFrame(syncMusicLoop);
+  }
+
+  async function startMusic(showError: boolean) {
+    const audio = audioRef.current;
+    if (!audio || !audio.paused) return;
+
+    try {
+      audio.currentTime = MUSIC_START_SECONDS;
+      audio.volume = 0;
+      await audio.play();
+      setMusicPlaying(true);
+      cancelMusicFrame();
+      syncMusicLoop();
+    } catch {
+      if (showError) {
+        setError("Nao foi possivel iniciar a musica automaticamente. Toque no botao novamente.");
+      }
+    }
+  }
+
+  async function toggleMusic() {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (musicPlaying) {
+      audio.pause();
+      cancelMusicFrame();
+      setMusicPlaying(false);
+      return;
+    }
+
+    await startMusic(true);
   }
 
   async function copyPix() {
@@ -453,11 +529,20 @@ export function PublicInvite({ event }: Props) {
     }, 1400);
   }
 
-  if (!hasLoadedState) return null;
-
   return (
     <main className="app heading-script">
       <InviteIntro visible={showIntro} />
+      <audio ref={audioRef} preload="auto" src={MUSIC_SRC} />
+      <button
+        aria-label={musicPlaying ? "Pausar musica" : "Tocar musica"}
+        aria-pressed={musicPlaying}
+        className={`music-toggle ${musicPlaying ? "is-playing" : ""}`}
+        onClick={toggleMusic}
+        type="button"
+        title={musicPlaying ? "Pausar musica" : "Tocar musica"}
+      >
+        <Icon.Music />
+      </button>
       <section className="hero">
         <HeroPetals />
         <Image
