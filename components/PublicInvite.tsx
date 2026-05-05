@@ -380,6 +380,7 @@ export function PublicInvite({ event }: Props) {
   const readingScrollDisabledRef = useRef(false);
   const readingScrollReadyRef = useRef(false);
   const readingScrollLastTimeRef = useRef<number | null>(null);
+  const originalScrollBehaviorRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!introStarted) return;
@@ -428,14 +429,29 @@ export function PublicInvite({ event }: Props) {
   }, []);
 
   useEffect(() => {
+    function restoreScrollBehavior() {
+      if (originalScrollBehaviorRef.current === null) return;
+
+      document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
+      originalScrollBehaviorRef.current = null;
+    }
+
     return () => {
       if (musicFrameRef.current !== null) cancelAnimationFrame(musicFrameRef.current);
       if (readingScrollFrameRef.current !== null) cancelAnimationFrame(readingScrollFrameRef.current);
       if (readingScrollTimeoutRef.current !== null) window.clearTimeout(readingScrollTimeoutRef.current);
+      restoreScrollBehavior();
     };
   }, []);
 
   useEffect(() => {
+    function restoreScrollBehavior() {
+      if (originalScrollBehaviorRef.current === null) return;
+
+      document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
+      originalScrollBehaviorRef.current = null;
+    }
+
     function stopReadingScroll() {
       if (!readingScrollReadyRef.current) return;
 
@@ -450,6 +466,8 @@ export function PublicInvite({ event }: Props) {
         window.clearTimeout(readingScrollTimeoutRef.current);
         readingScrollTimeoutRef.current = null;
       }
+
+      restoreScrollBehavior();
     }
 
     window.addEventListener("pointerdown", stopReadingScroll, { capture: true });
@@ -466,13 +484,28 @@ export function PublicInvite({ event }: Props) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     readingScrollReadyRef.current = true;
+    if (originalScrollBehaviorRef.current === null) {
+      originalScrollBehaviorRef.current = document.documentElement.style.scrollBehavior;
+      document.documentElement.style.scrollBehavior = "auto";
+    }
+
+    function restoreScrollBehavior() {
+      if (originalScrollBehaviorRef.current === null) return;
+
+      document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
+      originalScrollBehaviorRef.current = null;
+    }
 
     function step(timestamp: number) {
-      if (readingScrollDisabledRef.current) return;
+      if (readingScrollDisabledRef.current) {
+        restoreScrollBehavior();
+        return;
+      }
 
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       if (window.scrollY >= maxScroll - 1) {
         readingScrollFrameRef.current = null;
+        restoreScrollBehavior();
         return;
       }
 
@@ -500,6 +533,8 @@ export function PublicInvite({ event }: Props) {
         cancelAnimationFrame(readingScrollFrameRef.current);
         readingScrollFrameRef.current = null;
       }
+
+      restoreScrollBehavior();
     };
   }, [showIntro]);
 
