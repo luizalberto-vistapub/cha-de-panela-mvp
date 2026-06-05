@@ -376,6 +376,7 @@ export function PublicInvite({ event }: Props) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
   const rsvpRef = useRef<HTMLElement>(null);
   const pixRef = useRef<HTMLElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -393,6 +394,10 @@ export function PublicInvite({ event }: Props) {
 
     document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
     originalScrollBehaviorRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    setIsIOS(isIOSDevice());
   }, []);
 
   useEffect(() => {
@@ -669,7 +674,7 @@ export function PublicInvite({ event }: Props) {
   }
 
   return (
-    <main className="app heading-script">
+    <main className={`app heading-script ${isIOS ? "is-ios" : ""}`}>
       <InviteIntro onStart={startIntro} started={introStarted} visible={showIntro} />
       <audio ref={audioRef} preload="auto" src={MUSIC_SRC} />
       <button

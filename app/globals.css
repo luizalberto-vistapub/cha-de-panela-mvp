@@ -708,6 +708,23 @@ body::before {
     promptCaret 0.75s step-end 4.65s 6 forwards;
 }
 
+.is-ios .intro-prompt span {
+  width: auto;
+  overflow: visible;
+  border-right: 0;
+  white-space: normal;
+  clip-path: none;
+  transform: translateY(0.45rem);
+}
+
+.is-ios .intro-prompt span:nth-child(1) {
+  animation: promptFadeIn 1.2s ease 0.85s forwards;
+}
+
+.is-ios .intro-prompt span:nth-child(2) {
+  animation: promptFadeIn 1.2s ease 2.2s forwards;
+}
+
 @keyframes introButtonIn {
   from {
     opacity: 0;
@@ -770,6 +787,18 @@ body::before {
 
   100% {
     border-color: transparent;
+  }
+}
+
+@keyframes promptFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.45rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
