@@ -380,7 +380,15 @@ export function PublicInvite({ event }: Props) {
   const readingScrollDisabledRef = useRef(false);
   const readingScrollReadyRef = useRef(false);
   const readingScrollLastTimeRef = useRef<number | null>(null);
+  const readingScrollTargetRef = useRef<number | null>(null);
   const originalScrollBehaviorRef = useRef<string | null>(null);
+
+  const restoreScrollBehavior = useCallback(() => {
+    if (originalScrollBehaviorRef.current === null) return;
+
+    document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
+    originalScrollBehaviorRef.current = null;
+  }, []);
 
   useEffect(() => {
     if (!introStarted) return;
@@ -429,33 +437,21 @@ export function PublicInvite({ event }: Props) {
   }, []);
 
   useEffect(() => {
-    function restoreScrollBehavior() {
-      if (originalScrollBehaviorRef.current === null) return;
-
-      document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
-      originalScrollBehaviorRef.current = null;
-    }
-
     return () => {
       if (musicFrameRef.current !== null) cancelAnimationFrame(musicFrameRef.current);
       if (readingScrollFrameRef.current !== null) cancelAnimationFrame(readingScrollFrameRef.current);
       if (readingScrollTimeoutRef.current !== null) window.clearTimeout(readingScrollTimeoutRef.current);
+      readingScrollTargetRef.current = null;
       restoreScrollBehavior();
     };
-  }, []);
+  }, [restoreScrollBehavior]);
 
   useEffect(() => {
-    function restoreScrollBehavior() {
-      if (originalScrollBehaviorRef.current === null) return;
-
-      document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
-      originalScrollBehaviorRef.current = null;
-    }
-
     function stopReadingScroll() {
       if (!readingScrollReadyRef.current) return;
 
       readingScrollDisabledRef.current = true;
+      readingScrollTargetRef.current = null;
 
       if (readingScrollFrameRef.current !== null) {
         cancelAnimationFrame(readingScrollFrameRef.current);
@@ -477,7 +473,7 @@ export function PublicInvite({ event }: Props) {
       window.removeEventListener("pointerdown", stopReadingScroll, { capture: true });
       window.removeEventListener("click", stopReadingScroll, { capture: true });
     };
-  }, []);
+  }, [restoreScrollBehavior]);
 
   useEffect(() => {
     if (showIntro || readingScrollDisabledRef.current) return;
@@ -489,22 +485,21 @@ export function PublicInvite({ event }: Props) {
       document.documentElement.style.scrollBehavior = "auto";
     }
 
-    function restoreScrollBehavior() {
-      if (originalScrollBehaviorRef.current === null) return;
-
-      document.documentElement.style.scrollBehavior = originalScrollBehaviorRef.current;
-      originalScrollBehaviorRef.current = null;
-    }
-
     function step(timestamp: number) {
       if (readingScrollDisabledRef.current) {
+        readingScrollTargetRef.current = null;
         restoreScrollBehavior();
         return;
       }
 
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (window.scrollY >= maxScroll - 1) {
+      const scrollingElement = document.scrollingElement ?? document.documentElement;
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const maxScroll = scrollingElement.scrollHeight - viewportHeight;
+      const currentScrollY = scrollingElement.scrollTop;
+
+      if (currentScrollY >= maxScroll - 1) {
         readingScrollFrameRef.current = null;
+        readingScrollTargetRef.current = null;
         restoreScrollBehavior();
         return;
       }
@@ -512,14 +507,23 @@ export function PublicInvite({ event }: Props) {
       const lastTime = readingScrollLastTimeRef.current ?? timestamp;
       const elapsedSeconds = Math.min((timestamp - lastTime) / 1000, 0.12);
       readingScrollLastTimeRef.current = timestamp;
-      window.scrollBy(0, READING_SCROLL_SPEED * elapsedSeconds);
+
+      const targetScrollY = Math.min(
+        (readingScrollTargetRef.current ?? currentScrollY) + READING_SCROLL_SPEED * elapsedSeconds,
+        maxScroll
+      );
+      readingScrollTargetRef.current = targetScrollY;
+      window.scrollTo(0, targetScrollY);
       readingScrollFrameRef.current = requestAnimationFrame(step);
     }
 
     readingScrollTimeoutRef.current = window.setTimeout(() => {
+      const scrollingElement = document.scrollingElement ?? document.documentElement;
+
       readingScrollTimeoutRef.current = null;
       readingScrollLastTimeRef.current = null;
-      window.scrollBy(0, 1);
+      readingScrollTargetRef.current = scrollingElement.scrollTop + 1;
+      window.scrollTo(0, readingScrollTargetRef.current);
       readingScrollFrameRef.current = requestAnimationFrame(step);
     }, READING_SCROLL_DELAY_MS);
 
@@ -534,9 +538,10 @@ export function PublicInvite({ event }: Props) {
         readingScrollFrameRef.current = null;
       }
 
+      readingScrollTargetRef.current = null;
       restoreScrollBehavior();
     };
-  }, [showIntro]);
+  }, [restoreScrollBehavior, showIntro]);
 
   function jumpTo(ref: React.RefObject<HTMLElement>) {
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
