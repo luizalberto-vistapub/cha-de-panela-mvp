@@ -126,6 +126,11 @@ function getMapUrl(place: string) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`;
 }
 
+function isIOSDevice() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function getMusicVolume(currentTime: number) {
   if (currentTime < MUSIC_START_SECONDS || currentTime >= MUSIC_END_SECONDS) return 0;
 
@@ -477,6 +482,7 @@ export function PublicInvite({ event }: Props) {
 
   useEffect(() => {
     if (showIntro || readingScrollDisabledRef.current) return;
+    if (isIOSDevice()) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     readingScrollReadyRef.current = true;
